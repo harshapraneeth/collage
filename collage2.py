@@ -3,18 +3,14 @@ import cv2
 import numpy as np
 
 # input variables
-output_size, target_size, cell_size = 5000, 500, 50
+output_size, cell_size, n_inputs = 5000, 50, 570
 output_name, target_name, input_name = 'rakul.jpg', 'target.jpg', 'input_images/input ({}).jpeg'
-n_inputs = 570
-
 n_cells = output_size//cell_size
-target_cell_size = target_size//n_cells
 
 # loading images into numpy arrays
 print('Loading images...',end='\r')
 inputs = tuple(cv2.resize(cv2.imread(input_name.format(i)), (cell_size, cell_size)) for i in range(1, n_inputs+1))
-target = cv2.resize(cv2.imread(target_name), (target_size, target_size))
-output = np.zeros((output_size, output_size, 3), dtype=np.uint8)
+target = cv2.resize(cv2.imread(target_name), (output_size, output_size))
 print('Loading images... Done')
 
 # define similarity measure
@@ -24,7 +20,7 @@ dissimilarity = lambda a, b: abs(a[0]-b[0])+abs(a[1]-b[1])+abs(a[2]-b[2])
 print('Calculating averages...',end='\r')
 input_avgs = [ tuple(map(int, inp.mean(axis=(0,1)))) for inp in inputs ]
 target_avgs = [
-    [ tuple(map(int, target[i*target_cell_size:(i+1)*target_cell_size, j*target_cell_size:(j+1)*target_cell_size].mean(axis=(0,1))))  for j in range(n_cells) ] 
+    [ tuple(map(int, target[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size].mean(axis=(0,1))))  for j in range(n_cells) ] 
     for i in range(n_cells)
 ]
 print('Calculating averages... Done')
@@ -41,10 +37,10 @@ for i in range(n_cells):
                 if d==0: min_p=ii; break
                 if d<min_d: min_d, min_p = d, ii
             dis_table[target_avgs[i][j]] = min_p
-        output[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size] = inputs[min_p]
+        target[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size] = inputs[min_p]
     percent = (i+1)*100//n_cells
     print('Search for opitmal cells - Progress: [%s%s] %d%%'%('-'*int(percent*0.2), ' '*(20-int(percent*0.2)), percent), end='\r')
 
 # save output image
-cv2.imwrite(output_name, output)
+cv2.imwrite(output_name, target)
 print('\n\nImage saved as',output_name,'\n')
