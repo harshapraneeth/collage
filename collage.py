@@ -1,83 +1,46 @@
 # importing necessary libraires
-
-from PIL import Image
-import math
+import cv2
 import numpy as np
 
 # input variables
-
-cell_size = 100
-output_size = 10000
-target_name = 'target.jpg'
-input_name = 'input_images2/input ({}).jpg'
-output_name = 'friends.jpg'
-n_inputs = 380
-input_rr = 25
-
+output_size, cell_size, n_inputs = 5000, 50, 570
+output_name, target_name, input_name = 'rakul.jpg', 'target.jpg', 'input_images/input ({}).jpeg'
 n_cells = output_size//cell_size
-target_size = output_size//input_rr
-target_cell_size = cell_size//input_rr
 
 # loading images into numpy arrays
+print('Loading images...',end='\r')
+inputs = tuple(cv2.resize(cv2.imread(input_name.format(i)), (cell_size, cell_size)) for i in range(1, n_inputs+1))
+target = cv2.resize(cv2.imread(target_name), (output_size, output_size))
+print('Loading images... Done')
 
-inputs = np.array(
-    [ Image.open(input_name.format(i)).resize((cell_size, cell_size)).getdata() for i in range(1, n_inputs+1) ],
-    dtype=np.uint8
-).reshape(n_inputs, cell_size, cell_size, 3)
-
-target = np.array(
-    Image.open(target_name).resize((target_size, target_size)).getdata(),
-    dtype=np.uint8
-).reshape(target_size, target_size, 3)
-
-output = np.full((output_size, output_size, 3), 0, dtype=np.uint8)
-
-# define functions
-
-mean_color = lambda A, x, y, size, n: tuple(sum(A[i][j][k] for i in range(x, x+size) for j in range(y, y+size))//n for k in range(3))
-distance = lambda n, p1, p2: math.sqrt(sum((p1[i]-p2[i])**2 for i in range(n)))
-similarity = lambda a, b: 45000//(1+distance(3, a, b))
-
-def progressBar(current, total, barLength = 20):
-    percent = float(current) * 100 / total
-    arrow   = '-' * int(percent/100 * barLength - 1) + '>'
-    spaces  = ' ' * (barLength - len(arrow))
-    print('Progress: [%s%s] %d %%' % (arrow, spaces, percent), end='\r')
+# define similarity measure
+dissimilarity = lambda a, b: abs(a[0]-b[0])+abs(a[1]-b[1])+abs(a[2]-b[2])
 
 # calculating measures
-
-n_c, n_t_c = cell_size*cell_size, target_cell_size*target_cell_size
-
-input_avgs = [ mean_color(inp, 0, 0, cell_size, n_c) for inp in inputs ]
-
+print('Calculating averages...',end='\r')
+input_avgs = [ tuple(map(int, inp.mean(axis=(0,1)))) for inp in inputs ]
 target_avgs = [
-    [ mean_color(target, i*target_cell_size, j*target_cell_size, target_cell_size, n_t_c) for j in range(n_cells) ]
+    [ tuple(map(int, target[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size].mean(axis=(0,1))))  for j in range(n_cells) ] 
     for i in range(n_cells)
 ]
+print('Calculating averages... Done')
 
 # searching for optimal cells
-
 dis_table = dict()
-
 for i in range(n_cells):
     for j in range(n_cells):
-
-        try: max_p = dis_table[target_avgs[i][j]]
-        
+        try: min_p = dis_table[target_avgs[i][j]]
         except:
-            max_sim, max_p = similarity(input_avgs[0], target_avgs[i][j]), 0
+            min_d, min_p = dissimilarity(input_avgs[0], target_avgs[i][j]), 0
             for ii in range(1, n_inputs):
-                sim = similarity(input_avgs[ii], target_avgs[i][j])
-                if sim>max_sim: max_sim, max_p = sim, ii
-            dis_table[target_avgs[i][j]] = max_p
+                d = dissimilarity(input_avgs[ii], target_avgs[i][j])
+                if d==0: min_p=ii; break
+                if d<min_d: min_d, min_p = d, ii
+            dis_table[target_avgs[i][j]] = min_p
+        target[i*cell_size:(i+1)*cell_size, j*cell_size:(j+1)*cell_size] = inputs[min_p]
+    percent = (i+1)*100//n_cells
+    print('Search for opitmal cells - Progress: [%s%s] %d%%'%('-'*int(percent*0.2), ' '*(20-int(percent*0.2)), percent), end='\r')
 
-        for ii in range(cell_size):
-            for jj in range(cell_size):
-                output[i*cell_size+ii, j*cell_size+jj] = inputs[max_p][ii, jj]
-
-    progressBar((i+1)*100/n_cells,100, 25)
-
-output_image = Image.fromarray(output)
-output_image.save(output_name)
+# save output image
+cv2.imwrite(output_name, target)
 print('\n\nImage saved as',output_name,'\n')
-
