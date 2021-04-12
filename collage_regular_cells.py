@@ -11,13 +11,14 @@
 # ---------- importing necessary libraires ---------- 
 import cv2
 import numpy as np
+import random
 
 
 # ---------- input variables ---------- 
 min_output_size = 10000 # minimum output size in pixels - recommended values [5000, 30000]
-cell_size = (50, 50) # size of each small image (height, width) or cell in the output image in pixels - recommended [50, 300] (1/100th of the min_output_size)
+cell_size = (100, 100) # size of each small image (height, width) or cell in the output image in pixels - recommended [50, 300] (1/100th of the min_output_size)
 n_inputs = 500 # number of inputs in the "inputs folder" - recommended 100 to 2000 - images with a variety of colors produce good results 
-output_name = 'output2.jpg' # name of the output image that is saved after creating the collage
+output_name = 'output.jpg' # name of the output image that is saved after creating the collage
 target_name = 'target.jpg' # name of the image you want to replicate
 inputs_name = 'input_images/input ({}).jpeg' # input_folder/input_number.format as explained in the comments at the beginning
 
@@ -70,19 +71,19 @@ print('Calculating averages... Done')
 # ---------- searching for optimal cells ----------
 dis_table = dict()
 for i in range(n_cells[0]):
+    percent = i*100//n_cells[0]
+    print('Searching for opitmal cells - Progress: [%s%s] %d%%'%('-'*int(percent*0.2), ' '*(20-int(percent*0.2)), percent), end='\r')
     for j in range(n_cells[1]):
         try: min_p = dis_table[target_avgs[i][j]]
         except:
             min_d, min_p = dissimilarity(input_avgs[0], target_avgs[i][j]), 0
             for ii in range(1, n_inputs):
                 d = dissimilarity(input_avgs[ii], target_avgs[i][j])
-                if d==0: min_p=ii; break
+                if d==0 and random.randint(0,1)==0: min_p=ii; break
                 if d<min_d: min_d, min_p = d, ii
             dis_table[target_avgs[i][j]] = min_p
         output[i*cell_size[0]:(i+1)*cell_size[0], j*cell_size[1]:(j+1)*cell_size[1]] = inputs[min_p]
-    percent = (i+1)*100//n_cells[0]
-    print('Search for opitmal cells - Progress: [%s%s] %d%%'%('-'*int(percent*0.2), ' '*(20-int(percent*0.2)), percent), end='\r')
-print('\n')
+print('Searching for opitmal cells - Progress: [%s] 100%%'%('-'*20),'\n')
 
 
 # ---------- saving output image ----------
