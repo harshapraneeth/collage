@@ -1,15 +1,12 @@
-#input_div div
-{
-    display: flex;
-    justify-content: center;
+#input_div div {
+  display: flex;
+  justify-content: center;
 }
 
-#input_div *
-{
-    margin: 10px;
+#input_div * {
+  margin: 10px;
 }
 
-#input_div
-{
-    border-bottom: 1px solid black;
+#input_div {
+  border-bottom: 1px solid black;
 }
