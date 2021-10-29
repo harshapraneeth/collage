@@ -1,0 +1,48 @@
+<html>
+
+<head>
+    <title>Collage Maker</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <div id="input_div">
+        <div>
+            <input type="file" id="target_image" />
+            <input type="file" id="input_images" multiple />
+            <button onclick="init()">generate</button>
+            <button onclick="saveImage()">download</button>
+        </div>
+        <div>
+            <div>
+                <label for="output_size">Output size: </label>
+                <input type="range" id="output_size" name="output_size" min="1000" max="5000" value="3600" />
+                <span id="output_size_display">3600</span>
+            </div>
+            <div>
+                <label for="cell_size">Cell size: </label>
+                <input type="range" id="cell_size" name="cell_size" min="25" max="200" value="60" />
+                <span id="cell_size_display">60</span>
+            </div>
+            <div>
+                <label for="overlay_opacity">Overlay opacity: </label>
+                <input type="range" id="overlay_opacity" name="overlay_opacity" min="0" max="80" value="20" />
+                <span id="overlay_opacity_display">20</span>
+            </div>
+        </div>
+    </div>
+
+    <p id="log"></p>
+
+    <div id="canvas_div">
+        <canvas id="target_canvas" style="display: none;"></canvas>
+        <canvas id="inputs_canvas" style="display: none;"></canvas>
+        <canvas id="output_canvas"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
